@@ -69,5 +69,10 @@ kubeadm config images list
 kubeadm config images pull
 
 
+IN MASTER
+
 kubeadm init --pod-network-cidr=10.244.0.0/16
 
+wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+
+kubectl create -f  kube-flannel.yml
