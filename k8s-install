@@ -43,6 +43,7 @@ sudo apt-get install -y ca-certificates curl gnupg containerd.io
 
 containerd config default | tee /etc/containerd/config.toml
 
+
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
 systemctl daemon-reload
@@ -51,15 +52,27 @@ systemctl restart containerd.service
 
 sudo apt-get install -y apt-transport-https ca-certificates curl net-tools wget vim bash-completion tcpdump
 
- curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
- 
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
- 
-sudo apt-get update
+
+keyring_file="/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+
+# Check if the file exists
+if [ -e "$keyring_file" ]; then
+    echo "The file $keyring_file already exists. Skipping the command."
+else
+    # Download and install the Kubernetes GPG key
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o "$keyring_file"
+fi
 
 
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
+ #curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+ 
+ echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+ 
+ sudo apt-get update
+
+
+ apt-get install -y kubelet kubeadm kubectl
+ apt-mark hold kubelet kubeadm kubectl
  
  
 systemctl enable kubelet.service 
@@ -68,11 +81,35 @@ systemctl restart kubelet.service
 kubeadm config images list
 kubeadm config images pull
 
+sudo ufw disable
 
-IN MASTER
 
+#IN MASTER
 kubeadm init --pod-network-cidr=10.244.0.0/16
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
 
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 
 kubectl create -f  kube-flannel.yml
+
+
+#SLAVE
+
+kubeadm join 166.0.242.10:6443 --token 041tu2.habuutew3r9nxujb \
+	--discovery-token-ca-cert-hash sha256:9731ef7197ad8e9d3a16f5b03528296211f84fc68af6506407bdfdc2862cbb91 
+
+
+#FINALY CHECK THE KUBERNETES CLUSTER
+
+
+kubectl run nginx-pod --image=nginx:latest --port=80
+ 
+#LOGIN TO POD AND CHECK THE INTERNET CONNECTION
+kubectl exec -it nginx-pods /bin/sh
+
+#apt update
