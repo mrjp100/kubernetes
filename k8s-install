@@ -83,8 +83,14 @@ kubeadm config images pull
 
 sudo ufw disable
 
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+sudo sysctl -p
+
 
 #IN MASTER
+
+
 kubeadm init --pod-network-cidr=10.244.0.0/16
 
 mkdir -p $HOME/.kube
