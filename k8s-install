@@ -104,10 +104,11 @@ wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel
 kubectl create -f  kube-flannel.yml
 
 
-#SLAVE
+#SLAVE (Token only 24hrs valid)
 
 kubeadm join 166.0.242.10:6443 --token 041tu2.habuutew3r9nxujb \
 	--discovery-token-ca-cert-hash sha256:9731ef7197ad8e9d3a16f5b03528296211f84fc68af6506407bdfdc2862cbb91 
+
 
 
 #FINALY CHECK THE KUBERNETES CLUSTER
